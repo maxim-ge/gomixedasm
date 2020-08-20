@@ -72,7 +72,7 @@ func main() {
 					continue
 				}
 				if asmLine != printedLine{
-					fmt.Printf("\n;*** %s#%-4d >%s\n", fileName, asmLine, lines[asmLine])
+					fmt.Printf("\n;*** %s#%-4d >%s\n", fileName, asmLine, lines[asmLine+1])
 					printedLine = asmLine
 				}
 				fmt.Printf("%-12s %-22s %s\n", asmAddr, asmBin, asmCode)
