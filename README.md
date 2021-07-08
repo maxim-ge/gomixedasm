@@ -1,7 +1,7 @@
 # gomixedasm
 Utility to generate mixed source and assembly list
 
-Usage
+Usage:
 
 ```sh
 go build -o o.exe
