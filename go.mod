@@ -1,4 +1,4 @@
-module gomixedasm
+module github.com/maxim-ge/gomixedasm
 
 go 1.19
 

@@ -8,8 +8,9 @@
 package main
 
 import (
-	"gomixedasm"
 	"os"
+
+	"github.com/maxim-ge/gomixedasm"
 )
 
 func main() {
