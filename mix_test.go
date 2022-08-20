@@ -17,35 +17,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//go:embed testdata/addr_arithm.asm
-var addr_arithm_asm string
+//go:embed testdata/addr_arithm_by_objdump.asm
+var addr_arithm_by_objdump_asm string
 
-//go:embed testdata/addr_arithm-mixed.asm
-var addr_arithm_asm_mixed string
+//go:embed testdata/addr_arithm_by_objdump-mixed.asm
+var addr_arithm_by_objdump_mixed_asm string
 
 func TestMix_addr_arithm(t *testing.T) {
 	require := require.New(t)
 
 	os.Chdir("testdata")
-	var r = bufio.NewReader(strings.NewReader(addr_arithm_asm))
+	var r = bufio.NewReader(strings.NewReader(addr_arithm_by_objdump_asm))
 	var w strings.Builder
 	Mix(r, &w)
 
-	require.Equal(addr_arithm_asm_mixed, w.String())
+	require.Equal(addr_arithm_by_objdump_mixed_asm, w.String())
 }
 
-//go:embed testdata/addr_arithm_by_tool.asm
+//go:embed testdata/addr_arithm_by_compile.asm
 var addr_arithm_by_tool_asm string
 
-func TestMix_addr_arithm_by_tool(t *testing.T) {
-	// require := require.New(t)
+//go:embed testdata/addr_arithm_by_compile-mixed.asm
+var addr_arithm_by_tool_mixed_asm string
+
+func TestMix_addr_arithm_by_compile(t *testing.T) {
+	require := require.New(t)
 
 	os.Chdir("testdata")
 	var r = bufio.NewReader(strings.NewReader(addr_arithm_by_tool_asm))
-	// var w strings.Builder
-	Mix(r, os.Stdout)
+	var w strings.Builder
+	Mix(r, &w)
 
-	// require.Equal(addr_arithm_asm_mixed, w.String())
+	require.Equal(addr_arithm_by_tool_mixed_asm, w.String())
 }
 
 //go:embed testdata/strconv.Atoi.asm

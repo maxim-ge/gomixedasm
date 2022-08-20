@@ -13,7 +13,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 )
@@ -28,50 +27,62 @@ func Mix(r io.Reader, w io.Writer) {
 	scanner := bufio.NewScanner(r)
 
 	//TEXT main.addr_arithm(SB) E:/workspaces/cloud/inv-wasm/asm/addr_arithm.go
-	var rTextObjdump = regexp.MustCompile(`TEXT (.*?)\.([^\(]*)\(.*?\) (.*)`)
+	var rObjdumpText = regexp.MustCompile(`TEXT (.*?)\.([^\(]*)\(.*?\) (.*)`)
 
 	//	callfunc.go:5		0x4bd340	65488b0c2528000000	mov rcx, qword ptr gs:[0x28]
-	var rAsmObjdump = regexp.MustCompile(`\s*([^:]*?):-?(\d*)\s*([^\s]*)\s*([^\s]*)\s*(\S.*)`)
+	var rObjdumpInstr = regexp.MustCompile(`\s*([^:]*?):-?(\d*)\s*([^\s]*)\s*([^\s]*)\s*(\S.*)`)
 
 	//	0x0000 00000 (bytewriter_test.go:42)	TEXT	"".newLongSql(SB), ABIInternal, $24-0
-	// 0x0000
-	// 00000
+	// 0x0000 00000
 	// bytewriter_test.go
 	// 42
-	// TEXT`, `"".newLongSql, ABIInternal, $24-0`
-	var rTextCompile = regexp.MustCompile(`\s(\w*)\s(\w*)\s\(([^:]*):([^\)]*)\)\s(.*)`)
+	// TEXT	"".newLongSql(SB), ABIInternal, $24-0
+	var rCompileInstrOrText = regexp.MustCompile(`\s(\w*\s\w*)\s\(([^:]*):([^\)]*)\)\s(.*)`)
 
-	var textLines []string
-	var textFileName string
+	filesLines := make(map[string][]string)
 	lastPrintedLineNo := -1
-	lastPrintedFileName := ""
+	lastPrintedFilePath := ""
 
 	var matches []string
 
 	for scanner.Scan() {
-		str := scanner.Text()
+		line := scanner.Text()
 
-		//TEXT main.addr_arithm(SB) E:/workspaces/cloud/inv-wasm/asm/addr_arithm.go
+		// rCompileInstrOrText
+		//	0x0000 00000 (bytewriter_test.go:42)	TEXT	"".newLongSql(SB), ABIInternal, $24-0
 		{
-			matches = rTextObjdump.FindStringSubmatch(str)
+			matches = rCompileInstrOrText.FindStringSubmatch(line)
 			if len(matches) > 0 {
-				//funcName := matches[2]
-				fPath := matches[3]
-				_, textFileName = filepath.Split(fPath)
-				textLines = readLines(fPath)
-				lastPrintedLineNo = -1
-				fmt.Fprintf(w, ";***** %v\n", matches[0])
+				instructionFilePath := matches[2]
+				instructionLineNo, err := strconv.Atoi(matches[3])
+				if err != nil {
+					instructionLineNo = 1
+				}
+				fileLines := getFileLines(filesLines, instructionFilePath)
+
+				asmAddr := matches[1]
+				asmBody := matches[4]
+
+				srcLine := ""
+				if instructionLineNo < len(fileLines) {
+					srcLine = fileLines[instructionLineNo-1]
+				}
+				if instructionFilePath != lastPrintedFilePath || instructionLineNo != lastPrintedLineNo {
+					fmt.Fprintf(w, "\n;*** %s#%-4d >%s\n", instructionFilePath, instructionLineNo, srcLine)
+					lastPrintedFilePath = instructionFilePath
+					lastPrintedLineNo = instructionLineNo
+				}
+
+				fmt.Fprintf(w, "%v %v\n", asmAddr, asmBody)
 				continue
 			}
 		}
 
-		//	0x0000 00000 (bytewriter_test.go:42)	TEXT	"".newLongSql(SB), ABIInternal, $24-0
+		//TEXT main.addr_arithm(SB) E:/workspaces/cloud/inv-wasm/asm/addr_arithm.go
 		{
-			matches = rTextCompile.FindStringSubmatch(str)
+			matches = rObjdumpText.FindStringSubmatch(line)
 			if len(matches) > 0 {
-				fPath := matches[3]
-				_, textFileName = filepath.Split(fPath)
-				textLines = readLines(fPath)
+				//funcName := matches[2]
 				lastPrintedLineNo = -1
 				fmt.Fprintf(w, ";***** %v\n", matches[0])
 				continue
@@ -80,24 +91,27 @@ func Mix(r io.Reader, w io.Writer) {
 
 		//	callfunc.go:5		0x4bd340	65488b0c2528000000	mov rcx, qword ptr gs:[0x28]
 		{
-			matches = rAsmObjdump.FindStringSubmatch(str)
+			matches = rObjdumpInstr.FindStringSubmatch(line)
 			if len(matches) > 0 && len(matches[1]) > 0 {
-				instructionFileName := matches[1]
+				instructionFilePath := matches[1]
 				instructionLineNo, err := strconv.Atoi(matches[2])
 				if err != nil {
-					continue
+					instructionLineNo = 1
 				}
+
+				fileLines := getFileLines(filesLines, instructionFilePath)
+
 				asmAddr := matches[3]
 				asmBin := matches[4]
 				asmCode := matches[5]
 
 				srcLine := ""
-				if textFileName == instructionFileName && instructionLineNo < len(textLines) {
-					srcLine = textLines[instructionLineNo-1]
+				if instructionLineNo < len(fileLines) {
+					srcLine = fileLines[instructionLineNo-1]
 				}
-				if instructionFileName != lastPrintedFileName || instructionLineNo != lastPrintedLineNo {
-					fmt.Fprintf(w, "\n;*** %s#%-4d >%s\n", instructionFileName, instructionLineNo, srcLine)
-					lastPrintedFileName = instructionFileName
+				if instructionFilePath != lastPrintedFilePath || instructionLineNo != lastPrintedLineNo {
+					fmt.Fprintf(w, "\n;*** %s#%-4d >%s\n", instructionFilePath, instructionLineNo, srcLine)
+					lastPrintedFilePath = instructionFilePath
 					lastPrintedLineNo = instructionLineNo
 				}
 
@@ -105,10 +119,25 @@ func Mix(r io.Reader, w io.Writer) {
 				continue
 			}
 		}
+
+		// Nothing matched
+		{
+			fmt.Fprintln(w, line)
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getFileLines(filesLines map[string][]string, filePath string) (lines []string) {
+	lines, ok := filesLines[filePath]
+	if ok {
+		return
+	}
+	lines = readLines(filePath)
+	filesLines[filePath] = lines
+	return
 }
 
 func readLines(path string) []string {

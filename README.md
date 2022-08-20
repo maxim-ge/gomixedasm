@@ -3,7 +3,7 @@ Utility to generate mixed source and assembly list
 
 ## Installation:
 
-go install github.com/maxim-ge/gomixedasm@latest
+go install github.com/maxim-ge/gomixedasm/gomixedasm@latest
 
 ## Usage
 

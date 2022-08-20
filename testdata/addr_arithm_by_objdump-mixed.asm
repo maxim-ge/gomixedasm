@@ -25,3 +25,4 @@
 0x4614f1     488b6c2410             mov rbp, qword ptr [rsp+0x10]
 0x4614f6     4883c418               add rsp, 0x18
 0x4614fa     c3                     ret
+exit

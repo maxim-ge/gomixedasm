@@ -1,4 +1,3 @@
-Type 'help' for list of commands.
 TEXT main.addr_arithm(SB) addr_arithm.go
 	addr_arithm.go:13	0x4614b0	4883ec18		sub rsp, 0x18
 	addr_arithm.go:13	0x4614b4	48896c2410		mov qword ptr [rsp+0x10], rbp
