@@ -18,7 +18,7 @@ import (
 )
 
 /*
-Resources:
+Regexp resources:
 - https://regex101.com/
 - https://regexr.com/
 */
@@ -37,7 +37,7 @@ func Mix(r io.Reader, w io.Writer) {
 	// bytewriter_test.go
 	// 42
 	// TEXT	"".newLongSql(SB), ABIInternal, $24-0
-	var rCompileInstrOrText = regexp.MustCompile(`\s(\w*\s\w*)\s\(([^:]*):([^\)]*)\)\s(.*)`)
+	var rCompileInstrOrText = regexp.MustCompile(`\s(\w*\s\w*)\s\(([^:]*)(?::([^\)]*))?\)\s(.*)`)
 
 	filesLines := make(map[string][]string)
 	lastPrintedLineNo := -1
@@ -54,23 +54,22 @@ func Mix(r io.Reader, w io.Writer) {
 			matches = rCompileInstrOrText.FindStringSubmatch(line)
 			if len(matches) > 0 {
 				instructionFilePath := matches[2]
-				instructionLineNo, err := strconv.Atoi(matches[3])
-				if err != nil {
-					instructionLineNo = 1
-				}
-				fileLines := getFileLines(filesLines, instructionFilePath)
+				instructionLineNo, lineNoErr := strconv.Atoi(matches[3])
 
 				asmAddr := matches[1]
 				asmBody := matches[4]
 
-				srcLine := ""
-				if instructionLineNo < len(fileLines) {
-					srcLine = fileLines[instructionLineNo-1]
-				}
-				if instructionFilePath != lastPrintedFilePath || instructionLineNo != lastPrintedLineNo {
-					fmt.Fprintf(w, "\n;*** %s#%-4d >%s\n", instructionFilePath, instructionLineNo, srcLine)
-					lastPrintedFilePath = instructionFilePath
-					lastPrintedLineNo = instructionLineNo
+				if lineNoErr == nil {
+					fileLines := getFileLines(filesLines, instructionFilePath)
+					srcLine := ""
+					if instructionLineNo < len(fileLines) {
+						srcLine = fileLines[instructionLineNo-1]
+					}
+					if instructionFilePath != lastPrintedFilePath || instructionLineNo != lastPrintedLineNo {
+						fmt.Fprintf(w, "\n;*** %s#%-4d >%s\n", instructionFilePath, instructionLineNo, srcLine)
+						lastPrintedFilePath = instructionFilePath
+						lastPrintedLineNo = instructionLineNo
+					}
 				}
 
 				fmt.Fprintf(w, "%v %v\n", asmAddr, asmBody)

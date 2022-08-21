@@ -23,7 +23,7 @@ var addr_arithm_by_objdump_asm string
 //go:embed testdata/addr_arithm_by_objdump-mixed.asm
 var addr_arithm_by_objdump_mixed_asm string
 
-func TestMix_addr_arithm(t *testing.T) {
+func TestMix_addr_arithm_by_objdump(t *testing.T) {
 	require := require.New(t)
 
 	os.Chdir("testdata")

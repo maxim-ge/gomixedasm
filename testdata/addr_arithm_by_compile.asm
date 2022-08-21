@@ -8,6 +8,7 @@
 	0x0000 00000 (addr_arithm.go:16)	LEAQ	(AX)(BX*4), CX
 	0x0004 00004 (addr_arithm.go:16)	MOVQ	(CX), AX
 	0x0007 00007 (addr_arithm.go:16)	RET
+	0x001d 00029 (<unknown line number>)	NOP
 	0x0000 48 8d 0c 98 48 8b 01 c3                          H...H...
 go.cuinfo.packagename. SDWARFCUINFO dupok size=0
 	0x0000 6d 61 69 6e                                      main
