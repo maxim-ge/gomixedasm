@@ -95,25 +95,23 @@ func Mix(r io.Reader, w io.Writer) {
 			matches = rObjdumpInstr.FindStringSubmatch(line)
 			if len(matches) > 0 && len(matches[1]) > 0 {
 				instructionFilePath := matches[1]
-				instructionLineNo, err := strconv.Atoi(matches[2])
-				if err != nil {
-					instructionLineNo = 1
-				}
-
-				fileLines := getFileLines(filesLines, instructionFilePath)
+				instructionLineNo, lineNoErr := strconv.Atoi(matches[2])
 
 				asmAddr := matches[3]
 				asmBin := matches[4]
 				asmCode := matches[5]
 
-				srcLine := ""
-				if instructionLineNo < len(fileLines) {
-					srcLine = fileLines[instructionLineNo-1]
-				}
-				if instructionFilePath != lastPrintedFilePath || instructionLineNo != lastPrintedLineNo {
-					fmt.Fprintf(w, "\n;*** %s#%-4d >%s\n", instructionFilePath, instructionLineNo, srcLine)
-					lastPrintedFilePath = instructionFilePath
-					lastPrintedLineNo = instructionLineNo
+				if lineNoErr == nil {
+					fileLines := getFileLines(filesLines, instructionFilePath)
+					srcLine := ""
+					if instructionLineNo < len(fileLines) {
+						srcLine = fileLines[instructionLineNo-1]
+					}
+					if instructionFilePath != lastPrintedFilePath || instructionLineNo != lastPrintedLineNo {
+						fmt.Fprintf(w, "\n;*** %s#%-4d >%s\n", instructionFilePath, instructionLineNo, srcLine)
+						lastPrintedFilePath = instructionFilePath
+						lastPrintedLineNo = instructionLineNo
+					}
 				}
 
 				fmt.Fprintf(w, "%-12s %-22s %s\n", asmAddr, asmBin, asmCode)
