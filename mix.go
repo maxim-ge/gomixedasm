@@ -78,7 +78,8 @@ func Mix(r io.Reader, w io.Writer) {
 			}
 		}
 
-		//TEXT main.addr_arithm(SB) E:/workspaces/cloud/inv-wasm/asm/addr_arithm.go
+		// rObjdumpText
+		// TEXT main.addr_arithm(SB) E:/workspaces/cloud/inv-wasm/asm/addr_arithm.go
 		{
 			matches = rObjdumpText.FindStringSubmatch(line)
 			if len(matches) > 0 {
@@ -89,6 +90,7 @@ func Mix(r io.Reader, w io.Writer) {
 			}
 		}
 
+		// rObjdumpInstr
 		//	callfunc.go:5		0x4bd340	65488b0c2528000000	mov rcx, qword ptr gs:[0x28]
 		{
 			matches = rObjdumpInstr.FindStringSubmatch(line)
@@ -123,6 +125,8 @@ func Mix(r io.Reader, w io.Writer) {
 		// Nothing matched
 		{
 			fmt.Fprintln(w, line)
+			lastPrintedFilePath = ""
+			lastPrintedLineNo = -1
 		}
 	}
 	if err := scanner.Err(); err != nil {

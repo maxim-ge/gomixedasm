@@ -1,5 +1,6 @@
 TEXT main.addr_arithm(SB) addr_arithm.go
 	addr_arithm.go:13	0x4614b0	4883ec18		sub rsp, 0x18
+gclocals·1a65e721a2ccc325b382662e7ffee780 SRODATA dupok size=10
 	addr_arithm.go:13	0x4614b4	48896c2410		mov qword ptr [rsp+0x10], rbp
 	addr_arithm.go:13	0x4614b9	488d6c2410		lea rbp, ptr [rsp+0x10]
 	addr_arithm.go:13	0x4614be	48c744243000000000	mov qword ptr [rsp+0x30], 0x0
